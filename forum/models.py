@@ -7,6 +7,7 @@ class User(AbstractUser):
     rating = models.IntegerField(default=0)
     accepted_answers_count = models.IntegerField(default=0)
 
+
 class Tag(models.Model):
     name = models.CharField(max_length=255, null=False, unique=True)
 
