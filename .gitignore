@@ -1,0 +1,59 @@
+.idea/
+*/__pycache__/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff
+*.log
+*.pot
+
+# Environment variables
+.env
+
+# Media and static files
+/media/         # Ignore uploaded files
+/staticfiles/   # Ignore static files generated during deployment
+/static/        # Ignore collected static files
+
+# Virtual environments
+venv/
+.env/
+
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# MacOS-specific files
+.DS_Store
+
+# Linux-specific files
+*.swp
+*.swo
+
+# Files generated during deployment
+*.pyc
+*.pyo
+*.out
+*.err
+
+
+# Node modules (if using npm or frontend build tools)
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build / coverage files
+build/
+dist/
+*.egg-info/
+*.egg
+coverage/
+.coverage
+htmlcov/
+.tox/
+
+# Miscellaneous
+*.bak
+*.tmp
