@@ -26,11 +26,11 @@ class SignUpSerializer(serializers.ModelSerializer):
 
 
 class SignInSerializer(serializers.Serializer):
-    username = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
 
     def validate(self, data):
-        user = authenticate(username=data['username'], password=data['password'])
+        user = authenticate(username=data['email'], password=data['password'])
         if not user:
             raise serializers.ValidationError("Invalid username or password.")
         if not user.is_active:
