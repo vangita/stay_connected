@@ -1,22 +1,31 @@
 from django.db import transaction
 from django.db.models import Q, Max
-from rest_framework import generics
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.settings import reload_api_settings
 from rest_framework.views import APIView
 
-from forum.models import Question, Answer, Tag, User
+from forum.models import Question, Answer, Tag, User, Vote
 from forum.serializers import QuestionSerializer, DetailQuestionSerializer, AnswerSerializer, VoteSerializer, \
     TagSerializer, UserSerializer
 
 
 # Create your views here.
+class UserProfile(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user
 class TagListView(generics.ListAPIView):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-class QuestionListView(generics.ListAPIView):
+
+class QuestionListCreateView(generics.ListCreateAPIView):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
     permission_classes = [IsAuthenticated]
@@ -30,6 +39,9 @@ class QuestionListView(generics.ListAPIView):
         if tag:
             queryset = queryset.filter(tags__name=tag)
         return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class MyQuestionListView(generics.ListAPIView):
 
@@ -63,14 +75,29 @@ class AnswerListView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         question = Question.objects.get(id=self.kwargs['question_id'])
-        serializer.save(author=self.request.user, question=question)
+        serializer.save(user=self.request.user, question=question)
 
-class VoteCreateView(generics.CreateAPIView):
-    serializer_class = VoteSerializer
+class VoteCreateUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+    def post(self, request, *args, **kwargs):
+        answer_id = kwargs.get('answer_id')
+        vote_type = request.data.get('vote')
+        answer = get_object_or_404(Answer, id=answer_id)
+        if answer.user == request.user:
+            return Response({"error": "You cannot vote on your own answer."}, status=status.HTTP_400_BAD_REQUEST)
+
+        vote, created = Vote.objects.get_or_create(user=request.user, answer=answer)
+
+        if not created:
+            vote.vote = vote_type
+            vote.save()
+        else:
+            vote.vote = vote_type
+            vote.save()
+
+        serializer = VoteSerializer(vote)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class AcceptAnswerView(APIView):
     permission_classes = [IsAuthenticated]
@@ -80,7 +107,8 @@ class AcceptAnswerView(APIView):
             answer = Answer.objects.get(id=answer_id)
         except Answer.DoesNotExist:
             raise NotFound("Answer not found.")
-
+        if answer.user == request.user:
+            raise PermissionDenied("You cannot accept your own answer.")
         if answer.question.user != request.user:
             raise PermissionDenied("You are not allowed to accept an answer for this question.")
         if answer.is_accepted:

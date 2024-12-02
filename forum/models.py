@@ -56,6 +56,6 @@ class Vote(models.Model):
     answer = models.ForeignKey(Answer, on_delete=models.CASCADE, related_name='votes')
     vote = models.CharField(max_length=4, choices=VOTE_TYPE)
 
-    class Meta:
-        unique_together = ('user', 'answer')
+    # class Meta:
+    #     unique_together = ('user', 'answer')
 

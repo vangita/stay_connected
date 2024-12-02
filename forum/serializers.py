@@ -14,7 +14,8 @@ class TagSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class QuestionSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True)
+    tags = serializers.SlugRelatedField(queryset=Tag.objects.all(),many=True,slug_field='name')
+
     answer_count = serializers.SerializerMethodField()
     user = UserSerializer(read_only=True)
     has_accepted_answer = serializers.SerializerMethodField()
@@ -30,12 +31,29 @@ class QuestionSerializer(serializers.ModelSerializer):
     def get_has_accepted_answer(self, obj):
         return obj.answers.filter(is_accepted=True).exists()
 
+    def create(self, validated_data):
+        tags = validated_data.pop('tags', [])
+        question = Question.objects.create(**validated_data)
+        question.tags.set(tags)
+        return question
+
+    def update(self, instance, validated_data):
+        tags = validated_data.pop('tags', [])
+        instance.subject = validated_data.get('subject', instance.subject)
+        instance.description = validated_data.get('description', instance.description)
+        instance.save()
+        instance.tags.set(tags)
+        return instance
+
 
 class AnswerSerializer(serializers.ModelSerializer):
     votes = serializers.SerializerMethodField()
+    user = UserSerializer(read_only=True)
+    question = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = Answer
-        fields = '__all__'
+        fields = ['id', 'content', 'user', 'question', 'created_at','is_accepted', 'votes']
 
     def get_votes(self, obj):
         upvotes = obj.votes.filter(vote='up').count()
@@ -61,11 +79,12 @@ class DetailQuestionSerializer(serializers.ModelSerializer):
         return obj.answers.all()
 
 class VoteSerializer(serializers.ModelSerializer):
+    answer_id = serializers.IntegerField(write_only=True)
     class Meta:
         model = Vote
-        fields = ['id', 'user', 'answer', 'vote']
+        fields = ['id', 'answer_id', 'vote']
 
     def validate(self, data):
-        if data['answer'].user == data['user']:
+        if data['answer'].user == self.context['request'].user:
             raise serializers.ValidationError("You cannot vote on your own answer.")
         return data
