@@ -8,7 +8,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django_rest_passwordreset.signals import reset_password_token_created
+# from django_rest_passwordreset.signals import reset_password_token_created
 
 class SignUpAPIView(APIView):
     permission_classes = [AllowAny]
@@ -50,35 +50,35 @@ class LogoutAPIView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+#
+# class PasswordResetEmailHandler:
+#
+#     @staticmethod
+#     def send_email(reset_password_token, request):
+#         reset_password_url = "{}?token={}".format(
+#             request.build_absolute_uri(reverse('password_reset:reset-password-confirm')),
+#             reset_password_token.key
+#         )
+#
+#         email_plaintext_message = (
+#             f"Hello {reset_password_token.user.username},\n\n"
+#             f"You requested a password reset for your account.\n\n"
+#             f"To reset your password, please use the following link:\n\n"
+#             f"{reset_password_url}\n\n"
+#         )
+#
+#         msg = EmailMultiAlternatives(
+#             subject="Password Reset for Your Website",
+#             body=email_plaintext_message,
+#             from_email="noreply@yourwebsite.com",
+#             to=[reset_password_token.user.email],
+#         )
+#         msg.send()
+#
+#     @classmethod
+#     def handle_signal(cls, sender, instance, reset_password_token, *args, **kwargs):
+#         cls.send_email(reset_password_token, instance.request)
 
-class PasswordResetEmailHandler:
 
-    @staticmethod
-    def send_email(reset_password_token, request):
-        reset_password_url = "{}?token={}".format(
-            request.build_absolute_uri(reverse('password_reset:reset-password-confirm')),
-            reset_password_token.key
-        )
-
-        email_plaintext_message = (
-            f"Hello {reset_password_token.user.username},\n\n"
-            f"You requested a password reset for your account.\n\n"
-            f"To reset your password, please use the following link:\n\n"
-            f"{reset_password_url}\n\n"
-        )
-
-        msg = EmailMultiAlternatives(
-            subject="Password Reset for Your Website",
-            body=email_plaintext_message,
-            from_email="noreply@yourwebsite.com",
-            to=[reset_password_token.user.email],
-        )
-        msg.send()
-
-    @classmethod
-    def handle_signal(cls, sender, instance, reset_password_token, *args, **kwargs):
-        cls.send_email(reset_password_token, instance.request)
-
-
-reset_password_token_created.connect(PasswordResetEmailHandler.handle_signal)
+# reset_password_token_created.connect(PasswordResetEmailHandler.handle_signal)
 
